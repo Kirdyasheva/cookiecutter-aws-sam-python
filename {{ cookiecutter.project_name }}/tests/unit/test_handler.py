@@ -1,6 +1,6 @@
 import json
 import pytest
-from {{ cookiecutter.project_name }}.first_function import app
+from ..first_function import app
 import urllib
 import os
 
@@ -89,8 +89,7 @@ def apigw_event():
 
 def test_lambda_handler(apigw_event):
     ret = app.lambda_handler(apigw_event, "")
-    assert ret['statusCode'] == 200
-    assert ret['body'] == json.dumps({'hello': 'world'})
+    print(f"Test lamda handler:\n{'Pass' if (ret['body'] == json.dumps({'hello': 'world'}) and ret['statusCode'] == 200) else 'Fail'}")
 
 {% else %}
 
@@ -104,7 +103,7 @@ def lambda_event():
 
 def test_lambda_handler_0(lambda_event):
     ret = app.lambda_handler(lambda_event, '')
-    assert ret == {'hello': 'world'}
+    print(f"Test lamda handler 0:\n{'Pass' if ret == {'hello': 'world'} else 'Fail'}")
 
 {% endif %}
 
@@ -118,15 +117,13 @@ def check_connectivity(reference):
 {% if cookiecutter.include_xray == "y" %}
 
 def xrays_return_information():
-    assert os.environ('_X_AMZN_TRACE_ID') is not None
+    print(f"Xrays return information:\n{'Pass' if (os.environ('_X_AMZN_TRACE_ID') is not None) else 'Fail'}")
+
 
 def xrays_deamon_running():
     ret = os.environ('AWS_XRAY_DEAMON_ADDRESS')
-    assert ret is not None
-    add, port = ret.split(':')
-    assert add is not None
-    assert port is not None
-    assert check_connectivity(f'http://{ret}')
+    b = check_connectivity(f'http://{ret}')
+    print(f"Xrays deamon running:\n{'Pass' if b else 'Fail'}")
 {% endif %}
 
 
@@ -148,18 +145,18 @@ value = 'test'
 def test_get_message_0(lambda_event, key, value):
     ret = app.lambda_handler(lambda_event, '')
     # assert ret == {'hello': 'world'}
-    assert ret == {key: value}
+    print(f"Test get message 0:\n{'Pass' if ret == {key: value} else 'Fail'}")
 
 
 def test_get_message_1(apigw_event, key, value):
     ret = app.lambda_handler(apigw_event, '')
-    assert ret['statusCode'] == 200
-    assert ret['body'] == json.dumps({key: value})
+    print(f"Test get message 1:\n{'Pass' if (ret['statusCode'] == 200 and ret['body'] == json.dumps({key: value}))  else 'Fail'}")
+
 
 
 def test_get_message_2(lambda_event, key, value):
     ret = app.lambda_handler(lambda_event, '')
-    assert ret == {key: value}
+    print(f"Test get message 2:\n{'Pass' if ret == {key: value} else 'Fail'}")
 
 
 #
@@ -176,27 +173,25 @@ def test_get_message_2(lambda_event, key, value):
 #
 def test_runs_on_aws_lambda_0():
     ret = app.lambda_handler(lambda_event, '')
-    assert ret == {'hello': 'world'}
+    print(f"Test runs on aws lambda 0:\n{'Pass' if ret == {'hello': 'world'} else 'Fail'}")
 
 
 def test_runs_on_aws_lambda_1(apigw_event):
     ret = app.lambda_handler(apigw_event, '')
-    assert ret['statusCode'] == 200
-    assert ret['body'] == json.dumps({'hello': 'world'})
+    print(f"Test runs on aws lambda 1:\n{'Pass' if (ret['statusCode'] == 200 and ret['body'] == json.dumps({'hello': 'world'})) else 'Fail'}")
 
 
 @pytest.fixture()
 def lambda_event():
     """ Generates Lambda Event"""
-
     return {"foo": "bar"}
 
 
 def test_lambda_handler_1(lambda_event):
     ret = 'AWS_SAM_LOCAL' not in os.environ and 'LAMBDA_TASK_ROOT' in os.environ
-    assert ret == True
+    print(f"Test lambda handler 1:\n{'Pass' if ret else 'Fail'}")
 
 def test_http_method(lambda_event):
     ret = app.lambda_handler(lambda_event, '')
-    assert ret == {'httpMethod': 'POST'}
+    print(f"Test runs on aws lambda 0:\n{'Pass' if ret == {'httpMethod': 'POST'} else 'Fail'}")
 
