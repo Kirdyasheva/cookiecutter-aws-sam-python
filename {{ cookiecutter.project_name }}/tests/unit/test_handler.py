@@ -1,9 +1,10 @@
 import json
 import pytest
 from first_function import app
+import urllib
 import os
 
-{ % if cookiecutter.include_apigw == "y" %}
+{% if cookiecutter.include_apigw == "y" %}
 
 @pytest.fixture()
 def apigw_event():
@@ -91,19 +92,42 @@ def test_lambda_handler(apigw_event):
     assert ret['statusCode'] == 200
     assert ret['body'] == json.dumps({'hello': 'world'})
 
+{% else %}
 
-{ % else %}
 
 @pytest.fixture()
 def lambda_event():
     """ Generates Lambda Event"""
 
-    return {"foo": "bar"}
+    return {'foo': 'bar'}
 
 
-def test_lambda_handler(lambda_event):
-    ret = app.lambda_handler(lambda_event, "")
+def test_lambda_handler_0(lambda_event):
+    ret = app.lambda_handler(lambda_event, '')
     assert ret == {'hello': 'world'}
+
+{% endif %}
+
+def check_connectivity(reference):
+    try:
+        urllib.request.urlopen(reference, timeout=1)
+        return True
+    except urllib.request.URLError:
+        return False
+
+{% if cookiecutter.include_xray == "y" %}
+
+def xrays_return_information():
+    assert os.environ('_X_AMZN_TRACE_ID') is not None
+
+def xrays_deamon_running():
+    ret = os.environ('AWS_XRAY_DEAMON_ADDRESS')
+    assert ret is not None
+    add, port = ret.split(':')
+    assert add is not None
+    assert port is not None
+    assert check_connectivity(f'http://{ret}')
+{% endif %}
 
 
 #
@@ -121,29 +145,20 @@ key = 'hello'
 value = 'test'
 
 
-def test_get_message(lambda_event, key, value):
-    ret = app.lambda_handler(lambda_event, "")
+def test_get_message_0(lambda_event, key, value):
+    ret = app.lambda_handler(lambda_event, '')
     # assert ret == {'hello': 'world'}
     assert ret == {key: value}
 
 
-def test_get_message(apigw_event, key, value):
-    ret = app.lambda_handler(apigw_event, "")
+def test_get_message_1(apigw_event, key, value):
+    ret = app.lambda_handler(apigw_event, '')
     assert ret['statusCode'] == 200
     assert ret['body'] == json.dumps({key: value})
 
 
-{ % else %}
-
-@pytest.fixture()
-def lambda_event():
-    """ Generates Lambda Event"""
-
-    return {"foo": "bar"}
-
-
-def test_get_message(lambda_event, key, value):
-    ret = app.lambda_handler(lambda_event, "")
+def test_get_message_2(lambda_event, key, value):
+    ret = app.lambda_handler(lambda_event, '')
     assert ret == {key: value}
 
 
@@ -159,18 +174,16 @@ def test_get_message(lambda_event, key, value):
 #
 #
 #
-def test_runs_on_aws_lambda():
-    ret = app.lambda_handler(lambda_event, "")
+def test_runs_on_aws_lambda_0():
+    ret = app.lambda_handler(lambda_event, '')
     assert ret == {'hello': 'world'}
 
 
-def test_runs_on_aws_lambda(apigw_event):
-    ret = app.lambda_handler(apigw_event, "")
+def test_runs_on_aws_lambda_1(apigw_event):
+    ret = app.lambda_handler(apigw_event, '')
     assert ret['statusCode'] == 200
     assert ret['body'] == json.dumps({'hello': 'world'})
 
-
-{ % else %}
 
 @pytest.fixture()
 def lambda_event():
@@ -179,6 +192,11 @@ def lambda_event():
     return {"foo": "bar"}
 
 
-def test_lambda_handler(lambda_event):
+def test_lambda_handler_1(lambda_event):
     ret = 'AWS_SAM_LOCAL' not in os.environ and 'LAMBDA_TASK_ROOT' in os.environ
     assert ret == True
+
+def test_http_method(lambda_event):
+    ret = app.lambda_handler(lambda_event, '')
+    assert ret == {'httpMethod': 'POST'}
+
